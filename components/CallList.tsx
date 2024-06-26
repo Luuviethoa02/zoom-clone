@@ -1,20 +1,30 @@
 "use client";
 
 import { useGetCalls } from "@/hooks/useGetCalls";
-import { Call, CallRecording } from "@stream-io/video-react-sdk";
+import {
+  Call,
+  CallRecording,
+  QueryCallMembersResponse,
+  useCallStateHooks,
+  useStreamVideoClient,
+} from "@stream-io/video-react-sdk";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import MeetingCard from "./MeetingCard";
 import { Loader } from "lucide-react";
 import { useToast } from "./ui/use-toast";
+import { useUser } from "@clerk/nextjs";
 
 const CallList = ({ type }: { type: "ended" | "upcomming" | "recordings" }) => {
   const { endedCalls, upcomingCalls, callRecordings, isLoading } =
     useGetCalls();
   const router = useRouter();
+
   const [recordings, setRecording] = useState<CallRecording[]>([]);
 
   const { toast } = useToast();
+  const [members, setMembers] = useState<QueryCallMembersResponse[]>([]);
+
   const getCalls = () => {
     switch (type) {
       case "ended":
@@ -50,14 +60,26 @@ const CallList = ({ type }: { type: "ended" | "upcomming" | "recordings" }) => {
         const recordings = callData
           .filter((call) => call.recordings.length > 0)
           .flatMap((call) => call.recordings);
-
         setRecording(recordings);
       };
       if (type === "recordings") fetchRecordings();
+      if (type === "ended") {
+        const fetchMembers = async () => {
+          try {
+            const membersData = await Promise.all(
+              endedCalls?.map((call) => call.queryMembers()) ?? []
+            );
+
+          } catch (error) {
+            toast({ title: "Try again later" });
+          }
+        };
+        fetchMembers();
+      }
     } catch (error) {
-        toast({title:'Try again later'})
+      toast({ title: "Try again later" });
     }
-  }, [type, callRecordings]);
+  }, [type, callRecordings, toast]);
 
   if (isLoading) return <Loader />;
 
@@ -76,6 +98,13 @@ const CallList = ({ type }: { type: "ended" | "upcomming" | "recordings" }) => {
                 : type === "upcomming"
                 ? "/icons/upcoming.svg"
                 : "/icons/recordings.svg"
+            }
+            bgColor={
+              type == "ended"
+                ? "bg-[#38bdf8]"
+                : type == "recordings"
+                ? "bg-[#4f46e5]"
+                : "bg-[#fecdd3"
             }
             title={
               (meeting as Call).state?.custom?.description ||

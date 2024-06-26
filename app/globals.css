@@ -53,10 +53,27 @@
   -webkit-backdrop-filter: blur(8px);
 }
 
+.str-video.dark {
+  --str-video__primary-color: #00796b;
+  --str-video__secondary-color: #cddc39;
+  --str-video__base-color6: #1c1f2e;
+}
+
+.str-video.light {
+  --str-video__primary-color: #009688;
+  --str-video__secondary-color: #dce775;
+  --str-video__base-color6: #cbd5e1;
+  --str-video__button-primary-base: #e2e8f0;
+  --str-video__button-default-hover: #323b44;
+  --str-video__icon-default: #323b44;
+  --str-video__button-tertiary-base: #fca5a5;
+  --str-video__button-secondary-active: #fca5a5;
+  --str-video__icon-active: #323b44;
+}
 /* ==== clerk class override ===== */
 
 .cl-providerIcon__github {
-  filter:invert(1);
+  filter: invert(1);
 }
 
 .cl-userButtonPopoverActionButtonIcon {

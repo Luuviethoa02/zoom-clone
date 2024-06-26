@@ -3,6 +3,7 @@ import Link from "next/link";
 import React from "react";
 import MobileNavbar from "./MobileNavbar";
 import { SignedIn, UserButton } from "@clerk/nextjs";
+import SelectTheme from "./SelectTheme";
 
 const Navbar = () => {
   return (

@@ -17,6 +17,7 @@ interface MeetingModalProps {
   image?: string;
   buttonClassName?: string;
   buttonIcon?: string;
+  loadding?:boolean;
 }
 
 const MeetingModal = ({
@@ -31,6 +32,7 @@ const MeetingModal = ({
   image,
   buttonClassName,
   buttonIcon,
+  loadding
 }: MeetingModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -46,6 +48,7 @@ const MeetingModal = ({
           </h1>
           {children}
           <Button
+          disabled={loadding || false}
             className={
               "bg-blue-1 focus-visible:ring-0 focus-visible:ring-offset-0"
             }

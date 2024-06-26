@@ -9,7 +9,7 @@ import {
   useCallStateHooks,
 } from "@stream-io/video-react-sdk";
 import { useSearchParams, useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +20,9 @@ import {
 import { LayoutList, Users } from "lucide-react";
 import EndCallButton from "./EndCallButton";
 import Loader from "./Loader";
+import formatTime from "@/utils/formatTime";
+import { useToast } from "./ui/use-toast";
+import SelectTheme from "./SelectTheme";
 
 type CallLayoutType = "grid" | "speaker-left" | "speaker-right";
 
@@ -32,8 +35,11 @@ const MeetingRoom = () => {
   const [layout, setLayout] = useState<CallLayoutType>("speaker-left");
   const [showParticipants, setShowParticipants] = useState(false);
 
-  const { useCallCallingState } = useCallStateHooks();
+  const { useCallCallingState, useCallCreatedAt } = useCallStateHooks();
   const callingState = useCallCallingState();
+  const dateStart = useCallCreatedAt();
+  const { toast } = useToast();
+  
 
   if (callingState !== CallingState.JOINED) return <Loader />;
 
@@ -46,6 +52,12 @@ const MeetingRoom = () => {
       default:
         return <SpeakerLayout participantsBarPosition="right" />;
     }
+  };
+
+  const handleClickInfo = () => {
+    toast({
+      title: "Cuộc họp bắt đầu lúc: " + formatTime(dateStart as Date),
+    });
   };
 
   return (
@@ -63,7 +75,12 @@ const MeetingRoom = () => {
         </div>
       </div>
       <div className="fixed bottom-0 flex flex-wrap w-full items-center justify-center gap-5">
-        <CallControls onLeave={()=>{router.push('/')}} />
+        <CallControls
+          onLeave={() => {
+            router.push("/");
+          }}
+          
+        />
         <DropdownMenu>
           <div className="flex items-center">
             <DropdownMenuTrigger className="cursor-pointer rounded-2xl bg-[#19232d] px-4 py-2 hover:bg-[#4c535b]  ">
@@ -84,6 +101,13 @@ const MeetingRoom = () => {
                 <DropdownMenuSeparator className="border-dark-1" />
               </div>
             ))}
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => handleClickInfo()}
+            >
+              info
+            </DropdownMenuItem>
+            
           </DropdownMenuContent>
         </DropdownMenu>
         <CallStatsButton />
@@ -92,6 +116,8 @@ const MeetingRoom = () => {
             <Users size={20} className="text-white" />
           </div>
         </button>
+        
+        <SelectTheme/>
         {!isPersonalRoom && <EndCallButton />}
       </div>
     </section>

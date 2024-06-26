@@ -1,14 +1,41 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
-import { StreamVideoClient, StreamVideo } from "@stream-io/video-react-sdk";
+import {
+  StreamVideoClient,
+  StreamVideo,
+  Logger,
+  LogLevel,
+  logToConsole,
+} from "@stream-io/video-react-sdk";
 import { useUser } from "@clerk/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 import { tokenProvider } from "@/actions/stream.action";
 import Loader from "@/components/Loader";
 
+const logLevelMapping = new Map<LogLevel, Sentry.SeverityLevel>();
+logLevelMapping.set('debug', 'debug');
+logLevelMapping.set('info', 'info');
+logLevelMapping.set('warn', 'warning');
+logLevelMapping.set('error', 'error');
+
 const API_KEY = process.env.NEXT_PUBLIC_STREAM_API_KEY;
 
+export const customSentryLogger: Logger = (
+  logLevel: LogLevel,
+  message: string,
+  ...args: unknown[]
+) => {
+  if (logLevel === 'warn' || logLevel === 'error') {
+    Sentry.captureEvent({
+      level: logLevelMapping.get(logLevel),
+    });
+  }
+
+  // Call the SDK's default log method
+  logToConsole(logLevel, message, { data: 'some data' });
+};
 const StreamVideoProvider = ({ children }: { children: ReactNode }) => {
   const [videoClient, setVideoClient] = useState<StreamVideoClient>();
   const { user, isLoaded } = useUser();
@@ -24,7 +51,11 @@ const StreamVideoProvider = ({ children }: { children: ReactNode }) => {
         name: user?.username || user?.id,
         image: user?.imageUrl,
       },
-      tokenProvider:tokenProvider,
+      tokenProvider: tokenProvider,
+      options: {
+        logLevel: "info",
+        logger: customSentryLogger,
+      },
     });
 
     setVideoClient(client);

@@ -1,21 +1,30 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import HomeCard from "./HomeCard";
 import { useRouter } from "next/navigation";
 import MeetingModal from "./MeetingModal";
 import { useUser } from "@clerk/nextjs";
-import { Call, useStreamVideoClient } from "@stream-io/video-react-sdk";
+import {
+  Call,
+  StreamVideoEvent,
+  useCall,
+  useStreamVideoClient,
+} from "@stream-io/video-react-sdk";
 
 import { toast } from "@/components/ui/use-toast";
 import { Textarea } from "./ui/textarea";
 
 import ReactDatePicker from "react-datepicker";
 import { Input } from "./ui/input";
+import { StreamVideoClient } from "@stream-io/node-sdk";
 
 const MeetingTypeList = () => {
   const [meetingState, setMeetingState] = useState<
     "isInstantMeeting" | "isJoiningMeeting" | "isScheduleMeeting" | undefined
   >();
+
+  const [loading,setLoading] = useState<boolean>(false);
+
   const router = useRouter();
   const [values, setValues] = useState({
     dateTime: new Date(),
@@ -27,6 +36,7 @@ const MeetingTypeList = () => {
 
   const client = useStreamVideoClient();
   const user = useUser();
+  if(!client || !user) return;
 
   const createMeeting = async () => {
     if (!client || !user) return;
@@ -35,6 +45,7 @@ const MeetingTypeList = () => {
         console.log({ title: "Please select a date and time" });
         return;
       }
+      setLoading(true);
       const id = crypto.randomUUID();
       const call = client.call("default", id);
       if (!call) throw new Error("Failed to create meeting");
@@ -45,7 +56,7 @@ const MeetingTypeList = () => {
         data: {
           starts_at: startsAt,
           custom: {
-            description,
+            description
           },
         },
       });
@@ -59,10 +70,12 @@ const MeetingTypeList = () => {
     } catch (error) {
       console.error(error);
       toast({ title: "Failed to create Meeting" });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const meetingLink = `${process.env.NEXT_PUBLIC_BASE_URL}/meeting/${callDetail?.id}`;
+  
 
   return (
     <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -91,7 +104,7 @@ const MeetingTypeList = () => {
         title="View Recordings"
         description="Meeting Recordings"
         className="bg-yellow-1"
-        handleClick={() => router.push("/recordings")}
+        handleClick={() => router.push("/recording")}
       />
 
       {!callDetail ? (
@@ -152,6 +165,7 @@ const MeetingTypeList = () => {
         className="text-center"
         buttonText="Start Meeting"
         handleClick={createMeeting}
+        loadding={loading}
       />
 
       <MeetingModal
@@ -162,7 +176,7 @@ const MeetingTypeList = () => {
         buttonText="Join Meeting"
         handleClick={() => router.push(values.link)}
       >
-         <Input
+        <Input
           placeholder="Meeting link"
           onChange={(e) => setValues({ ...values, link: e.target.value })}
           className="border-none bg-dark-3 focus-visible:ring-0 focus-visible:ring-offset-0"
